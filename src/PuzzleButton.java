@@ -1,15 +1,43 @@
 package src;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-public class PuzzleButton {
+public class PuzzleButton extends JButton {
 
-    public static void main(String[] args) {
-        JFrame jFrame = new JFrame();
-        jFrame.setVisible(true);
-        JButton jbutton = new JButton("Button");
-        //jbutton.addActionListener(new Color(12, 15,63));
-        jFrame.add(jbutton);
+    private boolean isLastButton;
+
+    public PuzzleButton() {
+        super();
+        initUI();
     }
 
+    public PuzzleButton(Image image) {
+        super(new ImageIcon(image));
+        initUI();
+    }
+
+    private void initUI() {
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                setBorder(BorderFactory.createLineBorder(Color.yellow));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                setBorder(BorderFactory.createLineBorder(Color.gray));
+            }
+        });
+    }
+
+    public boolean isLastButton() {
+        return isLastButton;
+    }
+
+    public void setLastButton(boolean lastButton) {
+        isLastButton = lastButton;
+    }
 }

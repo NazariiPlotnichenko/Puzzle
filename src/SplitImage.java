@@ -4,7 +4,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.awt.*;
-import java.net.URL;
+//import java.net.URL;
 
 public class SplitImage {
     public static void main(String[] args) throws IOException {
@@ -25,7 +25,7 @@ public class SplitImage {
         int columns = 4;
 
         // initializing array to hold subimages
-        BufferedImage imgs[] = new BufferedImage[16];
+        BufferedImage[] imgs = new BufferedImage[16];
 
         // Equally dividing original image into subimages
         int subimage_Width = image.getWidth() / columns;
