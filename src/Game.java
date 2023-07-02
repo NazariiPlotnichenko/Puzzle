@@ -21,6 +21,8 @@ public class Game extends JFrame {
     private Image image;
     private PuzzleButton lastButton;
 
+    private JLabel label;
+
     public Game() {
         initUI();
     }
@@ -42,13 +44,19 @@ public class Game extends JFrame {
         solution.add(new Point(3, 0));
         solution.add(new Point(3, 1));
         solution.add(new Point(3, 2));
-        solution.add(new Point(3, 3));
+
+//        System.out.println("Solution:");
+//        for (Point a : solution
+//        ) {
+//            System.out.println(a.toString());
+//        }
 
         buttons = new ArrayList<>();
 
         panel = new JPanel();
         panel.setBorder(BorderFactory.createLineBorder(Color.gray));
         panel.setLayout(new GridLayout(4, 4));
+
 
         try {
 
@@ -65,6 +73,7 @@ public class Game extends JFrame {
 
         add(panel, BorderLayout.CENTER);
 
+        //System.out.println("Buttons:");
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 image = createImage(new FilteredImageSource(resized.getSource(),
@@ -80,9 +89,37 @@ public class Game extends JFrame {
                     lastButton.setLastButton(true);
                 } else {
                     buttons.add(button);
+                    //System.out.println(buttons.get(buttons.size() - 1).getClientProperty("position"));
                 }
             }
 
+        }
+
+        for (int i = 0; i < 16; i++) {
+            if (i == 15) {
+                panel.add(lastButton);
+            } else
+                panel.add(buttons.get(i));
+        }
+
+
+
+        panel.setPreferredSize(new Dimension(buttons.get(0).getIcon().getIconWidth()*4, buttons.get(0).getIcon().getIconHeight()*4));
+//        panel.setPreferredSize(buttons.get(0).getWidth()*4);
+//        System.out.println(lastButton);
+//        System.out.println(buttons.get(0).getIcon());
+//        System.out.println(buttons.get(1).getIcon());
+//        System.out.println(buttons.get(2).getIcon());
+//        System.out.println(buttons.get(3).getIcon());
+//        checkSolution();
+    }
+
+    //private void
+
+    private void checkSolution() {
+        System.out.println("Check solution:");
+        for (int i = 0; i < solution.size(); i++) {
+            System.out.println(i + ": " + (solution.get(i)).equals(buttons.get(i).getClientProperty("position")));
         }
     }
 
@@ -109,6 +146,7 @@ public class Game extends JFrame {
         Game game = new Game();
         game.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         game.setTitle("Puzzle game");
+        game.getContentPane().add(game.panel);
         game.pack();
         game.setLocationRelativeTo(null);
         game.setVisible(true);
