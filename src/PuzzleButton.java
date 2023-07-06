@@ -30,6 +30,12 @@ public class PuzzleButton extends JButton {
             public void mouseExited(MouseEvent e) {
                 setBorder(BorderFactory.createLineBorder(Color.gray));
             }
+
+//            @Override
+//            public void mousePressed(MouseEvent e) {
+//                System.out.println("x: " + e.getX());
+//                System.out.println("y: " + e.getY());
+//            }
         });
     }
 
