@@ -22,18 +22,30 @@ public class Puzzles extends JFrame {
     private Image image;
     private JLabel lastButton;
 
+    private JButton btn;
+
+    private JFrame frame;
+    private JPanel panelBtn;
+
     private ArrayList<JLabel> buttons;
-    private ArrayList<Image> startArray;
-    private ArrayList<Image> shuffledArray;
+    private ArrayList<Point> solutionArr;
 
     public Puzzles() {
         initUI();
     }
 
     public void initUI() {
+        frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Puzzle game");
+        //puzzles.setContentPane(puzzles.panel);
+        //puzzles.setResizable(false);
+
+        btn = new JButton();
+        panelBtn = new JPanel();
+
         buttons = new ArrayList<>();
-        startArray = new ArrayList<>();
-        shuffledArray = new ArrayList<>();
+        solutionArr = new ArrayList<>();
 
         panel = new JPanel();
         panel.setBorder(BorderFactory.createLineBorder(Color.gray));
@@ -43,7 +55,6 @@ public class Puzzles extends JFrame {
             source = loadImage();
             int h = getNewHeight(source.getWidth(), source.getHeight());
             resized = resizeImage(source, DESIRED_WIDTH, h, BufferedImage.TYPE_INT_ARGB);
-
         } catch (IOException e) {
             System.err.println("Problems with the source image" + e);
         }
@@ -53,30 +64,23 @@ public class Puzzles extends JFrame {
 
         cropAndAddImages();
 
-        //Collections.shuffle(buttons);
-
-        //System.out.println("Similar arrays: " + (shuffledArray.equals(startArray)));
-//        Collections.shuffle(shuffledArray);
-//
-//        image = new BufferedImage(width / 4, height / 4, BufferedImage.TYPE_INT_ARGB);
-//        shuffledArray.add((Image) image);
-//        buttons.add(new JLabel());
-//        buttons.get(15).setIcon(new ImageIcon(image));
-        shuffleAndSetArray();
-
-        //System.out.println("array + normal: " + (shuffledArray.equals(startArray)));
-
-        //buttons.add(lastButton);
-
         panel.setPreferredSize(new Dimension(width, height));
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < buttons.size(); i++) {
             panel.add(buttons.get(i));
         }
 
-        add(panel, BorderLayout.CENTER);
+        panelBtn.add(btn);
 
-        addMouseListener(new MouseAdapter() {
+        frame.setLayout(new GridLayout(0,2));
+
+        btn.setSize(50,50);
+        btn.setText("Press to sort image");
+
+        frame.add(panel);
+        frame.add(panelBtn);
+
+        frame.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 int mouseX;
@@ -112,63 +116,73 @@ public class Puzzles extends JFrame {
                     buttons.set(lastButtonPositionInArray, tmp);
                 }
                 repaintGrid();
+                //drawMessage();
             }
         });
-        
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     private void repaintGrid() {
-        remove(panel);
+        frame.remove(panel);
+        frame.remove(panelBtn);
         panel = new JPanel();
         panel.setBorder(BorderFactory.createLineBorder(Color.gray));
         panel.setLayout(new GridLayout(4, 4, 2, 2));
         for (int i = 0; i < 16; i++) {
             panel.add(buttons.get(i));
         }
-        add(panel);
-        repaint();
-        setVisible(true);
-    }
-
-    private void shuffleAndSetArray() {
-        Collections.shuffle(shuffledArray);
-        for (int i = 0; i < 16; i++) {
-            if (i == 15) {
-                image = new BufferedImage(width / 4, height / 4, BufferedImage.TYPE_INT_ARGB);
-                lastButton = new JLabel();
-                buttons.add(lastButton);
-                buttons.get(i).setIcon(new ImageIcon(image));
-            } else {
-                buttons.add(new JLabel());
-                buttons.get(i).setIcon(new ImageIcon(shuffledArray.get(i)));
-                //buttons.get(i).putClientProperty("position", );
-            }
-        }
+        frame.add(panel);
+        frame.add(panelBtn);
+        frame.repaint();
+        frame.setVisible(true);
     }
 
     private void cropAndAddImages() {
+        int p = 0;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 image = createImage(new FilteredImageSource(resized.getSource(),
                         new CropImageFilter(j * width / 4, i * height / 4, width / 4, height / 4)));
-//                PuzzleButton button = new PuzzleButton(image);
-//                button.putClientProperty("position", new Point(i, j));
                 if (j == 3 && i == 3) {
-                    return;
+                    solutionArr.add(new Point(i, j));
+                    image = new BufferedImage(width / 4, height / 4, BufferedImage.TYPE_INT_ARGB);
+                    lastButton = new JLabel();
+                    lastButton.setIcon(new ImageIcon(image));
+                    lastButton.putClientProperty("position", new Point(i, j));
                 } else {
-                    startArray.add(image);
-                    shuffledArray.add(image);
+                    solutionArr.add(new Point(i, j));
+                    buttons.add(new JLabel());
+                    buttons.get(p).setIcon(new ImageIcon(image));
+                    buttons.get(p).putClientProperty("position", new Point(i, j));
                 }
+                p++;
             }
         }
+        Collections.shuffle(buttons);
+        buttons.add(lastButton);
+        //System.out.println(checkSolution());
     }
 
-//    private void checkSolution() {
-//        for (:
-//             ) {
-//
-//        }
-//    }
+    private void drawMessage() {
+
+    }
+
+    private boolean checkSolution() {
+        int res = 0;
+        boolean solution = false;
+
+        for (int i = 0; i < buttons.size(); i++) {
+            if (buttons.get(i).getClientProperty("position").equals(solutionArr.get(i))) {
+                res++;
+            }
+            if (res == 15) {
+                solution = true;
+            }
+        }
+        return solution;
+    }
 
     private BufferedImage resizeImage(BufferedImage originImage, int width, int height, int type) {
         BufferedImage resizedImage = new BufferedImage(width, height, type);
@@ -191,12 +205,13 @@ public class Puzzles extends JFrame {
 
     public static void main(String[] args) {
         Puzzles puzzles = new Puzzles();
-        puzzles.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        puzzles.setTitle("Puzzle game");
-        puzzles.setResizable(false);
-        puzzles.pack();
-        puzzles.setLocationRelativeTo(null);
-        puzzles.setVisible(true);
+//        puzzles.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        puzzles.setTitle("Puzzle game");
+//        //puzzles.setContentPane(puzzles.panel);
+//        //puzzles.setResizable(false);
+//        puzzles.pack();
+//        puzzles.setLocationRelativeTo(null);
+//        puzzles.setVisible(true);
     }
 
 }

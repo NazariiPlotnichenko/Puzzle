@@ -1,14 +1,19 @@
 package test;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class Test {
     public static void main(String[] args) {
-        int a = 1;
-        int b = -1;
-        int c = 0;
-
-        a = Math.abs(a);
-        b = Math.abs(b);
-        c = Math.abs(c);
-        System.out.println("a = " + a + ", b = " + b + ", c = " + c);
+        JFrame jFrame = new JFrame();
+        JPanel panel = new JPanel(new GridLayout());
+        panel.setBounds(0,0, 400, 400);
+        //panel.setSize(400, 400);
+        jFrame.setBounds(0,0, 400, 400);
+        jFrame.add(panel);
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setLocationRelativeTo(null);
+        jFrame.pack();
+        jFrame.setVisible(true);
     }
 }
