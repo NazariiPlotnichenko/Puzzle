@@ -2,6 +2,7 @@ package src;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +14,7 @@ import java.awt.image.FilteredImageSource;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 public class Puzzles extends JFrame {
     private JPanel panel;
@@ -28,6 +29,7 @@ public class Puzzles extends JFrame {
     private JPanel panelBtn;
     private ArrayList<JLabel> buttons;
     private ArrayList<JLabel> solutionArr;
+    private Mapper mapper = new Mapper();
 
     public Puzzles() {
         initUI();
@@ -76,6 +78,7 @@ public class Puzzles extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 sortButton();
+                checkSolution();
             }
         });
 
@@ -117,9 +120,7 @@ public class Puzzles extends JFrame {
                     buttons.set(puzzlePositionInArray, buttons.get(lastButtonPositionInArray));
                     buttons.set(lastButtonPositionInArray, tmp);
                 }
-                if (checkSolution()) {
-                    drawMessage();
-                }
+                checkSolution();
                 repaintGrid();
             }
         });
@@ -142,6 +143,8 @@ public class Puzzles extends JFrame {
         frame.repaint();
         frame.setVisible(true);
     }
+
+    FifteenPuzzle a;
 
     private void cropAndAddImages() {
         int p = 0;
@@ -166,46 +169,54 @@ public class Puzzles extends JFrame {
                 p++;
             }
         }
-        Collections.shuffle(buttons);
-        buttons.add(lastButton);
+
+        a = new FifteenPuzzle();
+        a.shuffle(70);
+
+        buttons = mapper.toVisualState(a.tiles, lastButton, solutionArr);
+        repaintGrid();
     }
 
     private void drawMessage() {
         JTextArea text = new JTextArea("The game was successfully solved. Congratulations!!!");
         text.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         panelBtn.add(text);
-
     }
+
+    int i = 0;
+    Timer timer;
+    int count = 0;
 
     private void sortButton() {
-        JLabel tmp;
-        for (int i = 0; i < solutionArr.size(); i++) {
-            for (int j = 0; j < buttons.size(); j++) {
-                if (solutionArr.get(i).getClientProperty("position").equals(buttons.get(j).getClientProperty("position"))) {
-                    tmp = buttons.get(j);
-                    buttons.set(j, buttons.get(i));
-                    buttons.set(i, tmp);
-                    break;
-                }
+        FifteenPuzzle resolver = new FifteenPuzzle(mapper.fromVisualState(buttons));
+        List<FifteenPuzzle> solutions;
+        solutions = resolver.aStarSolve();
+        FifteenPuzzle.showSolution(solutions);
+
+        ActionListener actionListener = actionEvent -> {
+            buttons = mapper.toVisualState(solutions.get(count).tiles, lastButton, solutionArr);
+            checkSolution();
+            repaintGrid();
+            count++;
+            if (count == solutions.size()) {
+                timer.stop();
             }
-        }
-        drawMessage();
-        repaintGrid();
+        };
+
+        timer = new Timer(500, actionListener);
+        timer.start();
     }
 
-    private boolean checkSolution() {
+    private void checkSolution() {
         int res = 0;
-        boolean solution = false;
-
         for (int i = 0; i < buttons.size(); i++) {
             if (buttons.get(i).getClientProperty("position").equals(solutionArr.get(i).getClientProperty("position"))) {
                 res++;
             }
             if (res == 15) {
-                solution = true;
+                drawMessage();
             }
         }
-        return solution;
     }
 
     private BufferedImage resizeImage(BufferedImage originImage, int width, int height, int type) {
