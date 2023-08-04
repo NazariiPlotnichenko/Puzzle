@@ -22,12 +22,34 @@ public class Puzzles extends JFrame {
     private int width, height;
     private final int DESIRED_WIDTH = 400;
     private Image image;
-    private JLabel lastButton;
     private JButton btn;
     private JFrame frame;
     private JPanel panelBtn;
     private ArrayList<JLabel> buttons;
     private ArrayList<JLabel> solutionArr;
+
+    private JLabel a = null;
+    private JLabel b = null;
+
+    private MouseAdapter mouseAdapter = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (a == null) {
+                a = (JLabel) e.getSource();
+                a.setBorder(BorderFactory.createLineBorder(Color.red));
+            } else {
+                b = (JLabel) e.getSource();
+                a.setBorder(null);
+                int indexa = buttons.indexOf(a);
+                int indexb = buttons.indexOf(b);
+                buttons.set(indexa, b);
+                buttons.set(indexb, a);
+                a = null;
+                repaintGrid();
+                drawMessage();
+            }
+        }
+    };
 
     public Puzzles() {
         initUI();
@@ -82,47 +104,6 @@ public class Puzzles extends JFrame {
         frame.add(panel);
         frame.add(panelBtn);
 
-        frame.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                int mouseX;
-                int mouseY;
-
-                int lastButtonX;
-                int lastButtonY;
-
-                int checkX;
-                int checkY;
-
-                int puzzlePositionInArray;
-                int lastButtonPositionInArray;
-
-                JLabel tmp;
-
-                mouseX = e.getX() / buttons.get(0).getWidth();
-                mouseY = e.getY() / buttons.get(0).getHeight();
-
-                lastButtonX = lastButton.getX() / buttons.get(0).getWidth();
-                lastButtonY = lastButton.getY() / buttons.get(0).getHeight();
-
-                checkX = Math.abs(mouseX - lastButtonX);
-                checkY = Math.abs(mouseY - lastButtonY);
-
-                if ((checkX == 1 && checkY == 0) || (checkX == 0 && checkY == 1)) {
-
-                    puzzlePositionInArray = mouseY * 4 + mouseX;
-                    lastButtonPositionInArray = lastButtonY * 4 + lastButtonX;
-                    tmp = buttons.get(puzzlePositionInArray);
-
-                    buttons.set(puzzlePositionInArray, buttons.get(lastButtonPositionInArray));
-                    buttons.set(lastButtonPositionInArray, tmp);
-                }
-                if (checkSolution()) {
-                    drawMessage();
-                }
-                repaintGrid();
-            }
-        });
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -149,48 +130,168 @@ public class Puzzles extends JFrame {
             for (int j = 0; j < 4; j++) {
                 image = createImage(new FilteredImageSource(resized.getSource(),
                         new CropImageFilter(j * width / 4, i * height / 4, width / 4, height / 4)));
-                if (j == 3 && i == 3) {
-                    image = new BufferedImage(width / 4, height / 4, BufferedImage.TYPE_INT_ARGB);
-                    lastButton = new JLabel();
-                    lastButton.setIcon(new ImageIcon(image));
-                    lastButton.putClientProperty("position", new Point(i, j));
-                    solutionArr.add(new JLabel());
-                    solutionArr.get(p).setIcon(new ImageIcon(image));
-                    solutionArr.get(p).putClientProperty("position", new Point(i, j));
-                } else {
-                    buttons.add(new JLabel());
-                    buttons.get(p).setIcon(new ImageIcon(image));
-                    buttons.get(p).putClientProperty("position", new Point(i, j));
-                    solutionArr.add(buttons.get(p));
-                }
+                buttons.add(new JLabel());
+                buttons.get(p).setIcon(new ImageIcon(image));
+                buttons.get(p).putClientProperty("position", new Point(i, j));
+                buttons.get(p).addMouseListener(mouseAdapter);
+                solutionArr.add(buttons.get(p));
                 p++;
             }
         }
         Collections.shuffle(buttons);
-        buttons.add(lastButton);
     }
 
     private void drawMessage() {
-        JTextArea text = new JTextArea("The game was successfully solved. Congratulations!!!");
-        text.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        panelBtn.add(text);
-
+        if (checkSolution()) {
+            JTextArea text = new JTextArea("The game was successfully solved. Congratulations!!!");
+            text.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            panelBtn.add(text);
+            repaintGrid();
+        }
     }
 
+    private BufferedImage toBufferedImage(int i) {
+        ImageIcon imageIcon = (ImageIcon) buttons.get(i).getIcon();
+        Image img = imageIcon.getImage();
+        BufferedImage bImage = new BufferedImage(imageIcon.getIconWidth(), imageIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        bImage.getGraphics().drawImage(img, 0, 0, null);
+        return bImage;
+    }
+
+    String str = "";
+
     private void sortButton() {
-        JLabel tmp;
-        for (int i = 0; i < solutionArr.size(); i++) {
+        ArrayList<JLabel> sortedArray = new ArrayList<>();
+        JLabel label;
+        BufferedImage bImage;
+        BufferedImage bImage1;
+        int p = 0;
+        for (int i = 0; i < buttons.size(); i++) {
+            bImage = toBufferedImage(i);
             for (int j = 0; j < buttons.size(); j++) {
-                if (solutionArr.get(i).getClientProperty("position").equals(buttons.get(j).getClientProperty("position"))) {
-                    tmp = buttons.get(j);
-                    buttons.set(j, buttons.get(i));
-                    buttons.set(i, tmp);
-                    break;
+                if (i == j) {
+                    continue;
+                }
+                bImage1 = toBufferedImage(j);
+                areNeighbors(bImage, bImage1);
+            }
+            if (str.equals("32") || str.equals("23")) {
+                sortedArray.add(new JLabel());
+                sortedArray.get(p).setIcon((new ImageIcon(bImage)));
+                p++;
+                break;
+            }
+            str = "";
+        }
+        str = "";
+        for (int i = 0; i < buttons.size(); i++) {
+            if (i == 4 || i == 8 || i == 12) {
+                bImage = toBufferedImage(i - 4);
+                for (int j = 0; j < buttons.size(); j++) {
+                    str = "";
+                    if (i == j) {
+                        continue;
+                    }
+                    bImage1 = toBufferedImage(j);
+                    areNeighbors(bImage, bImage1);
+                    if (str.equals("3")) {
+                        sortedArray.add(new JLabel());
+                        sortedArray.get(p).setIcon(new ImageIcon(bImage1));
+                        p++;
+                        break;
+                    }
+                }
+            } else {
+                bImage = toBufferedImage(i);
+                for (int j = 0; j < buttons.size(); j++) {
+                    str = "";
+                    if (i == j) {
+                        continue;
+                    }
+                    bImage1 = toBufferedImage(j);
+                    areNeighbors(bImage, bImage1);
+                    if (str.equals("2")) {
+                        sortedArray.add(new JLabel());
+                        sortedArray.get(p).setIcon(new ImageIcon(bImage1));
+                        p++;
+                        break;
+                    }
                 }
             }
         }
-        drawMessage();
+
+        buttons = sortedArray;
         repaintGrid();
+    }
+
+    private boolean areNeighbors(BufferedImage piece1, BufferedImage piece2) {
+        // Порівнюємо пікселі на межах пазлів
+        int height = piece1.getHeight();
+        int width = piece1.getWidth();
+        int result = 0;
+
+        // Порівнюємо верхню межу пазла piece1 з нижньою межею пазла piece2
+        for (int x = 0; x < width; x++) {
+            int rgb1 = piece1.getRGB(x, 0);
+            int rgb2 = piece2.getRGB(x, height - 1);
+            if (areColorsSimilar(rgb1, rgb2)) {
+                result++;
+            }
+        }
+        if (result >= (width * 0.7)) {
+            str += "1";
+            return true;
+        }
+        result = 0;
+        // Порівнюємо нижню межу пазла piece1 з верхньою межею пазла piece2
+        for (int x = 0; x < width; x++) {
+            int rgb1 = piece1.getRGB(x, height - 1);
+            int rgb2 = piece2.getRGB(x, 0);
+            if (areColorsSimilar(rgb1, rgb2)) {
+                result++;
+            }
+        }
+        if (result >= (width * 0.7)) {
+            str += "3";
+            return true;
+        }
+        result = 0;
+        // Порівнюємо праву межу пазла piece1 з лівою межею пазла piece2
+        for (int y = 0; y < height; y++) {
+            int rgb1 = piece1.getRGB(width - 1, y);
+            int rgb2 = piece2.getRGB(0, y);
+            if (areColorsSimilar(rgb1, rgb2)) {
+                result++;
+            }
+        }
+        if (result >= (height * 0.7)) {
+            str += "2";
+            return true;
+        }
+        result = 0;
+        // Порівнюємо ліву межу пазла piece1 з правою межею пазла piece2
+        for (int y = 0; y < height; y++) {
+            int rgb1 = piece1.getRGB(0, y);
+            int rgb2 = piece2.getRGB(width - 1, y);
+            if (areColorsSimilar(rgb1, rgb2)) {
+                result++;
+            }
+        }
+        if (result >= (height * 0.7)) {
+            str += "4";
+            return true;
+        } else
+            return false;
+    }
+
+    private boolean areColorsSimilar(int rgb1, int rgb2) {
+        int threshold = 35;
+
+        int redDiff = Math.abs((rgb1 >> 16) & 0xFF - (rgb2 >> 16) & 0xFF);
+        int greenDiff = Math.abs((rgb1 >> 8) & 0xFF - (rgb2 >> 8) & 0xFF);
+        int blueDiff = Math.abs(rgb1 & 0xFF - rgb2 & 0xFF);
+        ;
+        return redDiff <= threshold && greenDiff <= threshold && blueDiff <= threshold;
     }
 
     private boolean checkSolution() {
@@ -201,7 +302,7 @@ public class Puzzles extends JFrame {
             if (buttons.get(i).getClientProperty("position").equals(solutionArr.get(i).getClientProperty("position"))) {
                 res++;
             }
-            if (res == 15) {
+            if (res == 16) {
                 solution = true;
             }
         }
